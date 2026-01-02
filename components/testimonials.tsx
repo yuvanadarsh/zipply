@@ -5,7 +5,6 @@ export default function Testimonials() {
     {
       //quote: "I used to spend 2 hours a day on email. Now I just read my 5-minute summary and I'm done. Absolute game changer.",
       quote: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla maximus tempor eros id volutpat.",
-
       author: "Sarah Chen",
       role: "Product Manager",
     },
