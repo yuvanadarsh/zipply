@@ -25,7 +25,6 @@ export default function Navbar() {
 
         <a
           href="https://blog.zipply.dev"
-          target="_blank"
           rel="noopener noreferrer"
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-lg font-bold  text-slate-300 hover:text-blue-400 transition-colors after:content-[''] after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-[2px] after:bg-blue-400 after:transition-all after:duration-300 hover:after:w-full"
         >
