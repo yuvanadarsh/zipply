@@ -1,14 +1,11 @@
 import Hero from "@/components/hero";
 import JoinBetaForm from "@/components/join-beta-form";
-import Navbar from "@/components/navbar";
 import Benefits from "@/components/benefits";
 import Testimonials from "@/components/testimonials";
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#030712] to-black overflow-hidden flex flex-col">
-      <Navbar />
-
       {/* Background decoration */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[20%] w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[100px]"></div>

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google"; // Using Inter as a standard modern sans-serif
+import { Inter } from "next/font/google";
 import Spotlight from "@/components/spotlight";
+import { AuthProvider } from "@/components/auth-provider";
+import Navbar from "@/components/navbar";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -18,8 +20,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <body className={inter.className}>
-        <Spotlight />
-        {children}
+        <AuthProvider>
+          <Spotlight />
+          <Navbar />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
