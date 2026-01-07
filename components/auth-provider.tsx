@@ -37,13 +37,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const currentSession = typeof session === "string" ? null : session;
 
       if (currentSession?.user) {
-        await fetchUserData(currentSession.user.id);
+        // 1. Set optimistic user from metadata immediately
+        setUser({
+          id: currentSession.user.id,
+          email: currentSession.user.email!,
+          full_name: currentSession.user.user_metadata?.full_name || currentSession.user.user_metadata?.name,
+          avatar_url: currentSession.user.user_metadata?.avatar_url || currentSession.user.user_metadata?.picture,
+        });
+
+        // 2. Stop loading immediately for optimistic UI
+        setLoading(false);
+
+        // 3. Fetch full profile from database in the background
+        fetchUserData(currentSession.user.id);
       } else {
         setLoading(false);
       }
     }
 
     initializeAuth();
+
+    // Listen for back-forward cache (BFcache) events
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        // Page was restored from cache, re-validate auth
+        initializeAuth();
+      }
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
 
     // Listen for auth changes
     const {
@@ -56,7 +78,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const currentSession = typeof session === "string" ? null : session;
 
       if (currentSession?.user) {
-        // Only fetch if identity changed or session refreshed
+        // Optimistic update on state change as well
+        setUser((prev) => ({
+          ...(prev || {}),
+          id: currentSession.user.id,
+          email: currentSession.user.email!,
+          full_name: currentSession.user.user_metadata?.full_name || currentSession.user.user_metadata?.name,
+          avatar_url: currentSession.user.user_metadata?.avatar_url || currentSession.user.user_metadata?.picture,
+        }));
+
+        setLoading(false);
         await fetchUserData(currentSession.user.id);
       } else {
         setUser(null);
@@ -66,6 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       mounted = false;
+      window.removeEventListener("pageshow", handlePageShow);
       subscription.unsubscribe();
     };
   }, []);
@@ -75,33 +107,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.from("users").select("*").eq("id", userId).single();
 
       if (error) {
-        console.error("Error fetching user data:", error);
-        // Fallback to basic session data if database record is missing
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (session?.user) {
-          setUser({
-            id: session.user.id,
-            email: session.user.email!,
-            full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name,
-            avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture,
-          });
-        }
-      } else {
+        // If fetch fails, we already have basic data from session metadata (optimistic update)
+        console.error("Error fetching user data from DB:", error);
+      } else if (data) {
         setUser(data);
       }
     } catch (error) {
-      console.error("Error fetching user data:", error);
+      console.error("Error in fetchUserData:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
+    try {
+      // 1. Clear local state immediately to avoid UI lag
+      setUser(null);
+      setSession(null);
+      setLoading(true);
+
+      // 2. Client-side sign out
+      await supabase.auth.signOut();
+
+      // 3. Force a hard redirect to ensure cookies/middleware are synced
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Error signing out:", error);
+      // Fallback: even if API fails, clear session and redirect
+      window.location.href = "/";
+    }
   };
 
   return (
